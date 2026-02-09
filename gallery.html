@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gallery</title>
+
+    <style>
+        body {
+          font-family: Sans-Serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>Files</h1>
+
+    <ul id="files"></ul>
+    
+    <script>
+        async function loadFiles() {
+            const files = await fetch('/files', { method: 'GET', credentials: 'include', cache: "no-store"}).then(response => response.json()).catch(() => []);
+            const ul = document.querySelector('#files');
+            ul.innerHTML = '';
+            ul.style.display = 'block'
+
+            if (files.length == 0) {
+              ul.style.display = 'contents'
+              ul.innerHTML = 'Liste vide!'
+            }
+
+            for(const f of files) {
+                const li = document.createElement('li');
+                li.style.marginBottom = '32px';
+
+                li.innerHTML = `
+                    <p style="color: gray;">${f.timestamp}</p>
+                    <a href="/files/${f.uuid}">${f.name}</a> 
+                `;
+
+                if (f.mine) {
+                  li.style.listStyleType = 'disclosure-closed';
+                }
+
+                const locked = (f.private && !f.mine);
+                if (locked) {
+                    li.innerHTML += '🔒';
+                } else if (f.private) {
+                    li.innerHTML += '🔓';
+                }
+
+                li.querySelector('a').onclick = function (e) {
+                    if (locked) {
+                        e.preventDefault(); 
+
+                        const password = prompt('Password?');
+                        if (password != null) {
+                            window.location = `${e.target.href}?pass=${password}`;
+                        }
+                    }
+                };
+
+                ul.appendChild(li);
+            }
+        }
+
+        loadFiles();
+    </script>
+</body>
+</html>
